@@ -28,15 +28,23 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Clean & Generate Pure Android Scaffold
+      - name: Prepare Clean Android Build & Fix Plugin Compatibility
         run: |
-          # Conflicting files hata kar fresh Android setup banate hain
+          # Conflicting files clean karte hain
           rm -rf android
           flutter create . --org com.example --project-name clap_to_find --platforms android
           
-          # Clap, Siren, Torch & Vibration permissions inject karte hain
+          # Android permissions inject karte hain
           sed -i '/<application/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' android/app/src/main/AndroidManifest.xml
-          
+
+          # Fix RecordLinux interface version mismatch on Linux CI runner
+          cat << 'EOF' >> pubspec.yaml
+
+dependency_overrides:
+  record_linux: 0.7.1
+  record_platform_interface: 1.0.0
+EOF
+
           flutter pub get
 
       - name: Build Debug APK (Testing App)
