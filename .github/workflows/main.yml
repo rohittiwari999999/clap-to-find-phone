@@ -34,8 +34,17 @@ jobs:
           flutter create . --org com.example --project-name clap_to_find --platforms android
           sed -i '/<application/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' android/app/src/main/AndroidManifest.xml
           printf "\ndependency_overrides:\n  record_linux: 0.7.1\n  record_platform_interface: 1.0.0\n" >> pubspec.yaml
+          
+          # Fix audio_service.dart imports and enum names
           grep -q "widgets.dart" lib/services/audio_service.dart || sed -i '1s/^/import \x27package:flutter\/widgets.dart\x27;\n/' lib/services/audio_service.dart
           sed -i 's/AudioEncoder.pcm16bits/AudioEncoder.pcm16bit/g' lib/services/audio_service.dart
+
+          # Ensure assets directory and alarm sound exist
+          mkdir -p assets/sounds
+          if [ ! -f assets/sounds/alarm_siren.mp3 ]; then
+            ffmpeg -f lavfi -i "sine=frequency=800:duration=2" -c:a libmp3lame assets/sounds/alarm_siren.mp3 -y || touch assets/sounds/alarm_siren.mp3
+          fi
+
           flutter pub get
 
       - name: Build Debug APK (Testing App)
